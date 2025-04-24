@@ -1,4 +1,5 @@
-# extract_go is a tool to extract backup urls from recon files.
+# extract_go
+extract_go is a tool to extract backup urls from recon files.
 
 ## 目标
 `httpx -t 150 -l output.txt -cl -oa output.txt`
