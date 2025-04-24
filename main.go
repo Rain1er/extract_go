@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -31,8 +32,8 @@ func readFile(filename string) []string {
 // todo 优化下载方法，总是timeout or reset
 func download(url string) error {
 	saveDir := "./download/"
-	filename := strings.TrimPrefix(url, "https://")
-	filename = strings.TrimPrefix(filename, "http://")
+	re := regexp.MustCompile(`^https?://`)
+	filename := re.ReplaceAllString(url, "")
 
 	filename = strings.ReplaceAll(filename, "/", "-")
 	savePath := saveDir + filename
@@ -98,15 +99,15 @@ func main() {
 	// 寻找count频率较低的url，去除干扰
 	for contentLength, count := range countMap {
 		//fmt.Println(contentLength, count)
-		if count <= 3 && contentLength > 1048576 { // 只要大于1MB的,在nuclei模版中优化了
+		if count <= 10 {
 			for url, contentLength_ := range urlMap {
-				if contentLength_ == contentLength {
+				if contentLength_ == contentLength && contentLength > 524288 {
 					fmt.Printf("%v %.1f MB contentLength频率 %v\n", url, float64(contentLength)/1024/1024, count)
 
-					if err := download(url); err != nil {
-						//fmt.Printf("下载失败: %v，跳过\n", err)
-						continue
-					}
+					//if err := download(url); err != nil {
+					//	//fmt.Printf("下载失败: %v，跳过\n", err)
+					//	continue
+					//}
 				}
 			}
 		}
