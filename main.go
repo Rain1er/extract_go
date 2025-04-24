@@ -3,6 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/fatih/color"
+	"io"
+	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -22,6 +26,39 @@ func readFile(filename string) []string {
 		list = append(list, scanner.Text())
 	}
 	return list
+}
+
+// todo 优化下载方法，总是timeout or reset
+func download(url string) error {
+	saveDir := "./download/"
+	filename := strings.TrimPrefix(url, "https://")
+	filename = strings.TrimPrefix(filename, "http://")
+
+	filename = strings.ReplaceAll(filename, "/", "-")
+	savePath := saveDir + filename
+
+	// 创建保存目录
+	os.MkdirAll(saveDir, os.ModePerm)
+
+	// 下载文件
+	resp, err := http.Get(url)
+	if err != nil {
+		color.Red("下载失败: %v", err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		color.Red("下载失败，状态码: %v", resp.StatusCode)
+		return err
+	}
+
+	out, _ := os.Create(savePath) // 创建保存文件
+	defer out.Close()
+	io.Copy(out, resp.Body) // 写入
+
+	log.Println("下载完成，保存路径:", savePath)
+	return nil // 成功返回 nil
 }
 
 func main() {
@@ -61,10 +98,15 @@ func main() {
 	// 寻找count频率较低的url，去除干扰
 	for contentLength, count := range countMap {
 		//fmt.Println(contentLength, count)
-		if count <= 3 && contentLength >= 1048576 { // 只要大于1MB的
+		if count <= 3 && contentLength > 1048576 { // 只要大于1MB的,在nuclei模版中优化了
 			for url, contentLength_ := range urlMap {
 				if contentLength_ == contentLength {
-					fmt.Printf("%v %.1f MB lenth频率 %v\n", url, float64(contentLength)/1024/1024, count)
+					fmt.Printf("%v %.1f MB contentLength频率 %v\n", url, float64(contentLength)/1024/1024, count)
+
+					if err := download(url); err != nil {
+						//fmt.Printf("下载失败: %v，跳过\n", err)
+						continue
+					}
 				}
 			}
 		}

@@ -11,7 +11,7 @@ https://zzzx.suse.edu.cn/2022.zip [66]
 https://zzzx.suse.edu.cn/2012.rar [66]
 ```
 
-对如上标准输出进行数据处理，对于输出3次以上`content_length`相同的url进行去重，并筛选掉1MB以下的文件，打印余下的结果
+对如上标准输出进行数据处理，对于输出3次以上`content_length`相同的url进行去重，打印余下的结果
 
 
 ## 设计思路
